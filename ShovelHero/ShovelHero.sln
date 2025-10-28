@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36616.10 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShovelHero", "ShovelHero\ShovelHero.csproj", "{87E1CAAD-8445-4041-8BF1-3A29D5ABA465}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87E1CAAD-8445-4041-8BF1-3A29D5ABA465}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E1CAAD-8445-4041-8BF1-3A29D5ABA465}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E1CAAD-8445-4041-8BF1-3A29D5ABA465}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E1CAAD-8445-4041-8BF1-3A29D5ABA465}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4A608908-AB83-4F8F-B4CF-CA796EAD2CCD}
+	EndGlobalSection
+EndGlobal
