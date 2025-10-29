@@ -1,142 +1,250 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登入頁面</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>任務媒合平台（無資安版）</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    body { font-family: "Segoe UI", sans-serif; background: #f9f9f9; margin: 0; padding: 20px; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    .container { max-width: 900px; margin: auto; }
+    button { margin: 5px; padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; }
+    button.primary { background: #007bff; color: #fff; }
+    button.secondary { background: #6c757d; color: #fff; }
+    form { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    input, select, textarea { width: 100%; padding: 6px; margin: 5px 0 10px; border: 1px solid #ccc; border-radius: 4px; }
+    .card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 0 4px rgba(0,0,0,0.1); }
+    .demand-header { display: flex; justify-content: space-between; align-items: center; }
+    .app-list { background: #f5f5f5; padding: 10px; border-radius: 6px; margin-top: 10px; }
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
     }
-
-    .login-container {
-      background-color: white;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
+    .modal-content {
+      background: #fff; padding: 20px; border-radius: 10px; width: 400px;
+      max-width: 90%; position: relative;
     }
-
-    h1 {
-      margin-bottom: 30px;
-      color: #667eea;
-    }
-
-    .input-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #444;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      font-size: 16px;
-      transition: border-color 0.3s;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: #667eea;
-    }
-
-    button {
-      background-color: #667eea;
-      color: white;
-      border: none;
-      padding: 12px 0;
-      width: 100%;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    button:hover {
-      background-color: #5567d9;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .message {
-      margin-top: 20px;
-      color: #333;
-      font-size: 14px;
-    }
-
-    .footer {
-      margin-top: 25px;
-      font-size: 12px;
-      color: #999;
-    }
+    .close { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div class="login-container">
-      <h1>登入系統</h1>
+  <div id="app" class="container">
+    <h1>任務媒合平台（無資安版）</h1>
 
-      <div class="input-group">
-        <label for="username">帳號</label>
-        <input id="username" type="text" v-model="username" placeholder="請輸入帳號">
+    <!-- 頁面切換 -->
+    <div style="text-align:center; margin-bottom:20px;">
+      <button class="primary" @click="view='list'">任務列表</button>
+      <button class="secondary" @click="view='create'">建立新任務</button>
+    </div>
+
+    <!-- 建立任務表單 -->
+    <div v-if="view==='create'">
+      <form @submit.prevent="createDemand">
+        <h2>建立任務</h2>
+        <label>任務類型</label>
+        <select v-model="demandForm.TaskType">
+          <option>清理</option>
+          <option>搬運</option>
+          <option>修繕</option>
+          <option>其他</option>
+        </select>
+
+        <label>位址代碼</label>
+        <input v-model="demandForm.AddressCode" placeholder="例如：A-1 或 B-3" />
+
+        <label>需求人數</label>
+        <input type="number" v-model.number="demandForm.RequiredCount" />
+
+        <label>集合地點</label>
+        <input v-model="demandForm.MeetingPoint" />
+
+        <label>風險注意事項</label>
+        <textarea v-model="demandForm.RiskNote"></textarea>
+
+        <label>聯絡資訊（手機 / Line ID）</label>
+        <input v-model="demandForm.ContactInfo" />
+
+        <button class="primary" type="submit">送出任務</button>
+        <span style="margin-left:10px; color:green;">{{ message }}</span>
+      </form>
+    </div>
+
+    <!-- 任務列表 -->
+    <div v-if="view==='list'">
+      <div v-if="demands.length === 0" style="text-align:center;">尚無任務</div>
+      <div v-for="d in demands" :key="d.id" class="card">
+        <div class="demand-header">
+          <h3>{{ d.taskType }}（{{ d.requiredCount }}人）</h3>
+          <button class="primary" @click="openApplyForm(d)">我要報名</button>
+        </div>
+        <p><b>位址代碼：</b>{{ d.addressCode }}</p>
+        <p><b>集合地點：</b>{{ d.meetingPoint }}</p>
+        <p><b>風險注意事項：</b>{{ d.riskNote }}</p>
+        <p><b>聯絡資訊：</b>{{ d.contactInfo }}</p>
+        <p><b>建立時間：</b>{{ formatDate(d.createdAt) }}</p>
+        <button @click="toggleApps(d.id)">查看報名清單</button>
+
+        <div v-if="expandedDemandId===d.id" class="app-list">
+          <div v-if="!applicationsByDemand[d.id] || applicationsByDemand[d.id].length===0">
+            尚無人報名
+          </div>
+          <ul v-else>
+            <li v-for="a in applicationsByDemand[d.id]" :key="a.id">
+              {{ a.name }} - {{ a.phone }}（{{ a.availableTime }}）<br>
+              專業：{{ a.skills }}，工具：{{ a.tools }}
+            </li>
+          </ul>
+        </div>
       </div>
+    </div>
 
-      <div class="input-group">
-        <label for="password">密碼</label>
-        <input id="password" type="password" v-model="password" placeholder="請輸入密碼">
-      </div>
+    <!-- 報名表單 (Modal) -->
+    <div v-if="applyModalVisible" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeApply">✖</span>
+        <h3>報名任務：{{ currentDemandForApply.taskType }}</h3>
 
-      <button @click="login">登入</button>
+        <form @submit.prevent="submitApplication">
+          <label>姓名</label>
+          <input v-model="applyForm.Name" required />
+          <label>電話</label>
+          <input v-model="applyForm.Phone" required />
+          <label>可服務時間</label>
+          <input v-model="applyForm.AvailableTime" />
+          <label>專業技能</label>
+          <input v-model="applyForm.Skills" />
+          <label>攜帶工具</label>
+          <input v-model="applyForm.Tools" />
+          <button class="primary" type="submit">送出報名</button>
+        </form>
 
-      <div class="message" v-if="message">
-        {{ message }}
-      </div>
-
-      <div class="footer">
-        ⓒ 2025 ShovelHero
+        <p style="color:green; margin-top:10px;">{{ applyMessage }}</p>
       </div>
     </div>
   </div>
 
+  <!-- Vue Script -->
   <script>
-    const { createApp } = Vue;
+  const { createApp } = Vue;
 
-    createApp({
-      data() {
-        return {
-          username: '',
-          password: '',
-          message: ''
-        };
-      },
-      methods: {
-        login() {
-          if (!this.username || !this.password) {
-            this.message = '請輸入帳號與密碼';
-          } else {
-            this.message = `歡迎回來，${this.username}！(此為前端示範畫面)`;
-          }
+  createApp({
+    data() {
+      return {
+        view: 'list',
+        apiBase: 'https://localhost:7165/api',
+        demandForm: {
+          TaskType: '清理',
+          AddressCode: '',
+          RequiredCount: 1,
+          MeetingPoint: '',
+          RiskNote: '',
+          ContactInfo: ''
+        },
+        message: '',
+        demands: [],
+        applicationsByDemand: {},
+        expandedDemandId: null,
+
+        applyModalVisible: false,
+        currentDemandForApply: {},
+        applyForm: {
+          Name: '',
+          Phone: '',
+          AvailableTime: '',
+          Skills: '',
+          Tools: ''
+        },
+        applyMessage: ''
+      };
+    },
+    mounted() {
+      this.loadDemands();
+    },
+    methods: {
+      async loadDemands() {
+        try {
+          const res = await fetch(`${this.apiBase}/Demand`);
+          this.demands = await res.json();
+        } catch (e) {
+          console.error(e);
+          this.demands = [];
         }
+      },
+      formatDate(s) {
+        try {
+          return new Date(s).toLocaleString();
+        } catch { return s; }
+      },
+      async createDemand() {
+        try {
+          const res = await fetch(`${this.apiBase}/Demand`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.demandForm)
+          });
+          if (!res.ok) throw new Error('建立失敗');
+          this.message = '任務已發佈 ✅';
+          this.demandForm = { TaskType:'清理', AddressCode:'', RequiredCount:1, MeetingPoint:'', RiskNote:'', ContactInfo:'' };
+          await this.loadDemands();
+          this.view = 'list';
+        } catch (err) {
+          console.error(err);
+          this.message = '發生錯誤 ❌';
+        }
+      },
+      openApplyForm(demand) {
+        this.applyModalVisible = true;
+        this.currentDemandForApply = demand;
+        this.applyForm = { Name:'', Phone:'', AvailableTime:'', Skills:'', Tools:'' };
+        this.applyMessage = '';
+      },
+      closeApply() {
+        this.applyModalVisible = false;
+        this.currentDemandForApply = {};
+      },
+      async submitApplication() {
+        try {
+          const payload = {
+            DemandId: this.currentDemandForApply.id || this.currentDemandForApply.Id,
+            Name: this.applyForm.Name,
+            Phone: this.applyForm.Phone,
+            AvailableTime: this.applyForm.AvailableTime,
+            Skills: this.applyForm.Skills,
+            Tools: this.applyForm.Tools
+          };
+          const res = await fetch(`${this.apiBase}/Application`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error('送出失敗');
+          this.applyMessage = '報名已送出 ✅';
+          await this.loadApplicationsFor(payload.DemandId);
+        } catch (e) {
+          console.error(e);
+          this.applyMessage = '發生錯誤 ❌';
+        }
+      },
+      async loadApplicationsFor(demandId) {
+        try {
+          const res = await fetch(`${this.apiBase}/Application/by-demand/${demandId}`);
+          const list = await res.json();
+          this.applicationsByDemand[demandId] = list;
+          this.expandedDemandId = demandId;
+        } catch (e) {
+          console.error(e);
+          this.applicationsByDemand[demandId] = [];
+        }
+      },
+      toggleApps(demandId) {
+        if (this.expandedDemandId === demandId) {
+          this.expandedDemandId = null;
+          return;
+        }
+        this.loadApplicationsFor(demandId);
       }
-    }).mount('#app');
+    }
+  }).mount('#app');
   </script>
 </body>
 </html>
