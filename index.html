@@ -1,264 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShovelHero - 天氣預報</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入頁面</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
+    .login-container {
+      background-color: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
 
-        #app {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+    h1 {
+      margin-bottom: 30px;
+      color: #667eea;
+    }
 
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 40px;
-            padding: 20px;
-        }
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #444;
+    }
 
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-        }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
 
-        .controls {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
 
-        .btn {
-            background-color: white;
-            color: #667eea;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
+    button {
+      background-color: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 0;
+      width: 100%;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
+    button:hover {
+      background-color: #5567d9;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
 
-        .btn:active {
-            transform: translateY(0);
-        }
+    .message {
+      margin-top: 20px;
+      color: #333;
+      font-size: 14px;
+    }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            text-align: center;
-            color: white;
-            font-size: 1.2em;
-            padding: 20px;
-        }
-
-        .error {
-            background-color: #ff4444;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .weather-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .weather-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .weather-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .weather-date {
-            color: #667eea;
-            font-size: 1.1em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .temperature {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #333;
-            margin: 15px 0;
-        }
-
-        .temp-unit {
-            font-size: 0.5em;
-            color: #666;
-        }
-
-        .temperature-detail {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .summary {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            margin-top: 10px;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: white;
-            padding: 40px;
-            font-size: 1.2em;
-        }
-
-        .api-info {
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 30px;
-            color: white;
-            text-align: center;
-            font-size: 0.9em;
-        }
-    </style>
+    .footer {
+      margin-top: 25px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <div class="header">
-            <h1>🌤️ ShovelHero</h1>
-            <p>天氣預報系統</p>
-        </div>
+  <div id="app">
+    <div class="login-container">
+      <h1>登入系統</h1>
 
-        <div class="controls">
-            <button class="btn" @click="fetchWeather" :disabled="loading">
-                {{ loading ? '載入中...' : '取得天氣預報' }}
-            </button>
-        </div>
+      <div class="input-group">
+        <label for="username">帳號</label>
+        <input id="username" type="text" v-model="username" placeholder="請輸入帳號">
+      </div>
 
-        <div v-if="error" class="error">
-            ⚠️ {{ error }}
-        </div>
+      <div class="input-group">
+        <label for="password">密碼</label>
+        <input id="password" type="password" v-model="password" placeholder="請輸入密碼">
+      </div>
 
-        <div v-if="loading && !weatherData.length" class="loading">
-            正在載入天氣資料...
-        </div>
+      <button @click="login">登入</button>
 
-        <div v-if="!loading && !weatherData.length && !error" class="empty-state">
-            點擊上方按鈕取得天氣預報
-        </div>
+      <div class="message" v-if="message">
+        {{ message }}
+      </div>
 
-        <div v-if="weatherData.length" class="weather-grid">
-            <div v-for="(weather, index) in weatherData" :key="index" class="weather-card">
-                <div class="weather-date">📅 {{ weather.date }}</div>
-                <div class="temperature">
-                    {{ weather.temperatureC }}<span class="temp-unit">°C</span>
-                </div>
-                <div class="temperature-detail">
-                    {{ weather.temperatureF }}°F
-                </div>
-                <div class="summary">{{ weather.summary }}</div>
-            </div>
-        </div>
-
-        <div class="api-info">
-            <strong>API 端點:</strong> {{ apiUrl }}<br>
-            <small>請確保後端服務正在運行於此位置</small>
-        </div>
+      <div class="footer">
+        ⓒ 2025 ShovelHero
+      </div>
     </div>
+  </div>
 
-    <script>
-        const { createApp } = Vue;
+  <script>
+    const { createApp } = Vue;
 
-        createApp({
-            data() {
-                return {
-                    apiUrl: 'http://localhost:5278/weatherforecast',
-                    weatherData: [],
-                    loading: false,
-                    error: null
-                };
-            },
-            methods: {
-                async fetchWeather() {
-                    this.loading = true;
-                    this.error = null;
-
-                    try {
-                        const response = await fetch(this.apiUrl);
-                        
-                        if (!response.ok) {
-                            throw new Error(`HTTP 錯誤! 狀態: ${response.status}`);
-                        }
-
-                        this.weatherData = await response.json();
-                    } catch (err) {
-                        this.error = `無法取得天氣資料: ${err.message}。請確認後端服務是否運行中。`;
-                        console.error('API 錯誤:', err);
-                    } finally {
-                        this.loading = false;
-                    }
-                }
-            },
-            mounted() {
-                // 頁面載入時自動取得天氣資料
-                this.fetchWeather();
-            }
-        }).mount('#app');
-    </script>
+    createApp({
+      data() {
+        return {
+          username: '',
+          password: '',
+          message: ''
+        };
+      },
+      methods: {
+        login() {
+          if (!this.username || !this.password) {
+            this.message = '請輸入帳號與密碼';
+          } else {
+            this.message = `歡迎回來，${this.username}！(此為前端示範畫面)`;
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
 </body>
 </html>
