@@ -1,4 +1,5 @@
 using ShovelHero.Middleware;
+using ShovelHero.Middlewares;
 using ShovelHero.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,9 +10,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-// 註冊 DataStore 為單例
-builder.Services.AddSingleton<DataStore>();
 
 // 讀取 Rate Limiting 設定
 var rateLimitOptions = builder.Configuration
@@ -33,6 +31,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<DataStore>();
 
 var app = builder.Build();
+
+// 安全標頭
+app.UseSecurityHeaders();
 
 app.UseCors("AllowAll");
 
