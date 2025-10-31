@@ -1,3 +1,4 @@
+using ShovelHero.Middleware;
 using ShovelHero.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,16 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// 註冊 DataStore 為單例
+builder.Services.AddSingleton<DataStore>();
+
+// 讀取 Rate Limiting 設定
+var rateLimitOptions = builder.Configuration
+    .GetSection("RateLimit")
+    .Get<RateLimitOptions>() ?? new RateLimitOptions();
+
+builder.Services.AddSingleton(rateLimitOptions);
 
 builder.Services.AddCors(options =>
 {
@@ -34,31 +45,23 @@ app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
+// 加入 Rate Limiting 中間件（在路由之前）
+if (rateLimitOptions.Enabled)
+{
+    app.UseMiddleware<RateLimitingMiddleware>(
+        rateLimitOptions.RequestLimit,
+        rateLimitOptions.TimeWindowMinutes
+    );
+
+    app.Logger.LogInformation(
+        "Rate Limiting 已啟用：每 {TimeWindow} 分鐘最多 {Limit} 個請求",
+        rateLimitOptions.TimeWindowMinutes,
+        rateLimitOptions.RequestLimit
+    );
+}
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
-
-// --- 簡單的記憶體儲存類別 ---
-public class DataStore
-{
-    public List<Demand> Demands { get; } = new();
-    public List<Application> Applications { get; } = new();
-
-    public DataStore()
-    {
-        // 預設一筆測試資料
-        Demands.Add(new Demand
-        {
-            Id = Guid.NewGuid(),
-            TaskType = "清理",
-            AddressCode = "A-1",
-            RequiredCount = 3,
-            MeetingPoint = "捷運出口",
-            RiskNote = "請穿戴手套",
-            ContactInfo = "0912-345-678",
-            CreatedAt = DateTime.UtcNow
-        });
-    }
-}
