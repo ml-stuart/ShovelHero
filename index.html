@@ -2,8 +2,9 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>任務媒合平台（無資安版）</title>
+  <title>任務媒合平台（含前端 AES 加密）</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <style>
     body { font-family: "Segoe UI", sans-serif; background: #f9f9f9; margin: 0; padding: 20px; }
     h1 { text-align: center; margin-bottom: 30px; }
@@ -12,24 +13,45 @@
     button.primary { background: #007bff; color: #fff; }
     button.secondary { background: #6c757d; color: #fff; }
     form { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
-    input, select, textarea { width: 100%; padding: 6px; margin: 5px 0 10px; border: 1px solid #ccc; border-radius: 4px; }
+    input, select, textarea { width: 100%; padding: 6px; margin: 5px 0 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     .card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 0 4px rgba(0,0,0,0.1); }
     .demand-header { display: flex; justify-content: space-between; align-items: center; }
     .app-list { background: #f5f5f5; padding: 10px; border-radius: 6px; margin-top: 10px; }
     .modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
+      z-index: 1000;
     }
     .modal-content {
       background: #fff; padding: 20px; border-radius: 10px; width: 400px;
-      max-width: 90%; position: relative;
+      max-width: 90%; position: relative; max-height: 80vh; overflow-y: auto;
     }
     .close { position: absolute; top: 10px; right: 10px; cursor: pointer; font-size: 18px; }
+    .encrypted-badge { 
+      display: inline-block; 
+      background: #28a745; 
+      color: white; 
+      padding: 2px 8px; 
+      border-radius: 4px; 
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #007bff;
+      padding: 10px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
   </style>
 </head>
 <body>
   <div id="app" class="container">
-    <h1>任務媒合平台（無資安版）</h1>
+    <h1>任務媒合平台<span class="encrypted-badge">🔒 AES 加密</span></h1>
+
+    <div class="info-box">
+      <strong>🔐 安全說明：</strong>個人資料（姓名、電話、聯絡資訊）在傳送前會使用 AES-256 加密保護
+    </div>
 
     <!-- 頁面切換 -->
     <div style="text-align:center; margin-bottom:20px;">
@@ -61,8 +83,8 @@
         <label>風險注意事項</label>
         <textarea v-model="demandForm.RiskNote"></textarea>
 
-        <label>聯絡資訊（手機 / Line ID）</label>
-        <input v-model="demandForm.ContactInfo" />
+        <label>聯絡資訊（手機 / Line ID）🔒</label>
+        <input v-model="demandForm.ContactInfo" placeholder="此欄位會加密傳送" />
 
         <button class="primary" type="submit">送出任務</button>
         <span style="margin-left:10px; color:green;">{{ message }}</span>
@@ -80,7 +102,7 @@
         <p><b>位址代碼：</b>{{ d.addressCode }}</p>
         <p><b>集合地點：</b>{{ d.meetingPoint }}</p>
         <p><b>風險注意事項：</b>{{ d.riskNote }}</p>
-        <p><b>聯絡資訊：</b>{{ d.contactInfo }}</p>
+        <p><b>聯絡資訊：</b>{{ decryptData(d.contactInfo) || d.contactInfo }}</p>
         <p><b>建立時間：</b>{{ formatDate(d.createdAt) }}</p>
         <button @click="toggleApps(d.id)">查看報名清單</button>
 
@@ -90,7 +112,7 @@
           </div>
           <ul v-else>
             <li v-for="a in applicationsByDemand[d.id]" :key="a.id">
-              {{ a.name }} - {{ a.phone }}（{{ a.availableTime }}）<br>
+              {{ decryptData(a.name) || a.name }} - {{ decryptData(a.phone) || a.phone }}（{{ a.availableTime }}）<br>
               專業：{{ a.skills }}，工具：{{ a.tools }}
             </li>
           </ul>
@@ -105,10 +127,10 @@
         <h3>報名任務：{{ currentDemandForApply.taskType }}</h3>
 
         <form @submit.prevent="submitApplication">
-          <label>姓名</label>
-          <input v-model="applyForm.Name" required />
-          <label>電話</label>
-          <input v-model="applyForm.Phone" required />
+          <label>姓名 🔒</label>
+          <input v-model="applyForm.Name" required placeholder="會加密傳送" />
+          <label>電話 🔒</label>
+          <input v-model="applyForm.Phone" required placeholder="會加密傳送" />
           <label>可服務時間</label>
           <input v-model="applyForm.AvailableTime" />
           <label>專業技能</label>
@@ -132,6 +154,8 @@
       return {
         view: 'list',
         apiBase: 'https://localhost:7165/api',
+        // AES 加密密鑰（實際應用中應該從安全的地方獲取，例如環境變數或密鑰管理服務）
+        encryptionKey: 'ShovelHero2024SecretKey!@#$%',
         demandForm: {
           TaskType: '清理',
           AddressCode: '',
@@ -161,6 +185,28 @@
       this.loadDemands();
     },
     methods: {
+      // AES 加密函數
+      encryptData(data) {
+        if (!data) return data;
+        try {
+          return CryptoJS.AES.encrypt(data, this.encryptionKey).toString();
+        } catch (e) {
+          console.error('加密失敗:', e);
+          return data;
+        }
+      },
+      // AES 解密函數
+      decryptData(encryptedData) {
+        if (!encryptedData) return encryptedData;
+        try {
+          const bytes = CryptoJS.AES.decrypt(encryptedData, this.encryptionKey);
+          const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+          return decrypted || encryptedData;
+        } catch (e) {
+          console.error('解密失敗:', e);
+          return encryptedData;
+        }
+      },
       async loadDemands() {
         try {
           const res = await fetch(`${this.apiBase}/Demand`);
@@ -177,16 +223,24 @@
       },
       async createDemand() {
         try {
+          // 加密聯絡資訊
+          const encryptedForm = {
+            ...this.demandForm,
+            ContactInfo: this.encryptData(this.demandForm.ContactInfo)
+          };
+
           const res = await fetch(`${this.apiBase}/Demand`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(this.demandForm)
+            body: JSON.stringify(encryptedForm)
           });
           if (!res.ok) throw new Error('建立失敗');
-          this.message = '任務已發佈 ✅';
+          this.message = '任務已發佈 ✅（個資已加密）';
           this.demandForm = { TaskType:'清理', AddressCode:'', RequiredCount:1, MeetingPoint:'', RiskNote:'', ContactInfo:'' };
           await this.loadDemands();
-          this.view = 'list';
+          setTimeout(() => {
+            this.view = 'list';
+          }, 1000);
         } catch (err) {
           console.error(err);
           this.message = '發生錯誤 ❌';
@@ -204,22 +258,27 @@
       },
       async submitApplication() {
         try {
+          // 加密姓名和電話
           const payload = {
             DemandId: this.currentDemandForApply.id || this.currentDemandForApply.Id,
-            Name: this.applyForm.Name,
-            Phone: this.applyForm.Phone,
+            Name: this.encryptData(this.applyForm.Name),
+            Phone: this.encryptData(this.applyForm.Phone),
             AvailableTime: this.applyForm.AvailableTime,
             Skills: this.applyForm.Skills,
             Tools: this.applyForm.Tools
           };
+
           const res = await fetch(`${this.apiBase}/Application`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
           if (!res.ok) throw new Error('送出失敗');
-          this.applyMessage = '報名已送出 ✅';
+          this.applyMessage = '報名已送出 ✅（個資已加密）';
           await this.loadApplicationsFor(payload.DemandId);
+          setTimeout(() => {
+            this.closeApply();
+          }, 1500);
         } catch (e) {
           console.error(e);
           this.applyMessage = '發生錯誤 ❌';
